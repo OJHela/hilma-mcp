@@ -122,9 +122,13 @@ async def health_check(request: Request) -> PlainTextResponse:
 app = mcp.http_app(middleware=middleware)
 
 if __name__ == "__main__":
-    import uvicorn
+    import sys
 
-    port = int(os.getenv("MCP_PORT", "8000"))
-    host = os.getenv("MCP_HOST", "0.0.0.0")
-    print(f"Käynnistetään HILMA MCP -palvelin osoitteessa {host}:{port}/mcp")
-    uvicorn.run(app, host=host, port=port)
+    if "--stdio" in sys.argv:
+        mcp.run(transport="stdio")
+    else:
+        import uvicorn
+        port = int(os.getenv("MCP_PORT", "8000"))
+        host = os.getenv("MCP_HOST", "0.0.0.0")
+        print(f"Käynnistetään HILMA MCP -palvelin osoitteessa {host}:{port}/mcp")
+        uvicorn.run(app, host=host, port=port)

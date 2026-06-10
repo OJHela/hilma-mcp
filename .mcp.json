@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "hilma": {
+      "command": "/Users/heikkihelaniemi/Cloudia-mcp/venv/bin/python",
+      "args": ["/Users/heikkihelaniemi/Cloudia-mcp/server.py", "--stdio"]
+    }
+  }
+}
