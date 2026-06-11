@@ -1,23 +1,26 @@
 """
-server.py – HILMA MCP -palvelin (FastMCP, SSE-transport).
+server.py – HILMA MCP -palvelin (FastMCP, HTTP/SSE-transport).
 
 HILMA on Suomen virallinen julkisten hankintojen ilmoituskanava (Hansel Oy).
 Käyttää HILMA:n julkisia JSON-rajapintoja ilman autentikointia.
 
 Käyttö:
-    python3 server.py                  → käynnistää palvelimen portissa 8000
-    uvicorn server:app --port 8000     → tuotanto-ajotapa
+    uvicorn server:app --host 0.0.0.0 --port 8000
 
 Ympäristömuuttujat (.env):
-    MCP_PORT        – portti (oletus 8000)
-    MCP_HOST        – osoite (oletus 0.0.0.0)
-    MCP_ALLOWED_IPS – sallitut IP:t pilkulla eroteltuina, tai * kaikille (oletus *)
+    MCP_PORT             – portti (oletus 8000)
+    MCP_HOST             – osoite (oletus 0.0.0.0)
+    MCP_ALLOWED_IPS      – sallitut IP:t pilkulla eroteltuina, tai * kaikille (oletus *)
+    MCP_SERVER_JWT_SECRET   – JWT-allekirjoitusavain (valinnainen, min 32 merkkiä)
+    MCP_SERVER_JWT_ISSUER   – JWT-myöntäjä (valinnainen)
+    MCP_SERVER_JWT_AUDIENCE – JWT-kohdeyleisö (valinnainen)
 """
 
 import os
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from fastmcp.server.auth.providers.jwt import JWTVerifier
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -32,6 +35,19 @@ from tools_hilma import (
     hilma_tilastot,
     listaa_hankintayksikot,
 )
+
+####### JWT AUTH (valinnainen) #######
+
+jwt_secret = os.getenv("MCP_SERVER_JWT_SECRET", "").strip()
+if jwt_secret:
+    verifier = JWTVerifier(
+        public_key=jwt_secret,
+        issuer=os.getenv("MCP_SERVER_JWT_ISSUER", ""),
+        audience=os.getenv("MCP_SERVER_JWT_AUDIENCE", ""),
+        algorithm="HS256",
+    )
+else:
+    verifier = None
 
 ####### CUSTOM MIDDLEWARE #######
 
@@ -67,7 +83,7 @@ TYÖKALUT:
   hae_hankintailmoitukset(hakusana)     → Hae ilmoituksia vapaahaulla
   get_hankintailmoitus(id)              → Hae yksittäisen ilmoituksen täydet tiedot
   listaa_hankintayksikot(hakusana)      → Listaa hankintayksiköt (organisaatiot)
-  hae_cpv_koodit(hakusana)              → Hae CPV-koodeja kategorian nimellä
+  hae_cpv_koodit(hakusana)             → Hae CPV-koodeja kategorian nimellä
   hilma_tilastot()                      → Reaaliaikaiset tilastot (uudet, avoimet)
 
 SUOSITELTU TYÖNKULKU:
@@ -94,6 +110,7 @@ HUOMIOITA:
 Datalähde: hankintailmoitukset.fi | Ylläpitäjä: Hansel Oy | Lisenssi: avoin data"""
 
 VERSION = "1.0.0"
+WEBSITE_URL = "https://www.hankintailmoitukset.fi"
 
 ####### SERVER CONFIGURATION #######
 
@@ -101,6 +118,8 @@ mcp = FastMCP(
     name="HILMA – Julkiset hankinnat",
     instructions=INSTRUCTION_STRING,
     version=VERSION,
+    website_url=WEBSITE_URL,
+    auth=verifier,
 )
 
 ####### TOOLS #######
