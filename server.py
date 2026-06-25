@@ -23,6 +23,7 @@ from fastmcp import FastMCP
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 
@@ -70,7 +71,15 @@ class IPAllowlistMiddleware(BaseHTTPMiddleware):
 
 
 ALLOWED_IPS = os.getenv("MCP_ALLOWED_IPS", "*").split(",")
-middleware = [Middleware(IPAllowlistMiddleware, allowed_ips=ALLOWED_IPS)]
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+    ),
+    Middleware(IPAllowlistMiddleware, allowed_ips=ALLOWED_IPS),
+]
 
 ####### SERVER METADATA #######
 
