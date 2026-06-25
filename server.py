@@ -138,7 +138,7 @@ async def health_check(request: Request) -> PlainTextResponse:
 
 ####### RUNNING THE SERVER #######
 # Run with: uvicorn server:app --host 0.0.0.0 --port 8000
-app = mcp.http_app(middleware=middleware)
+app = mcp.http_app(middleware=middleware, transport="sse")
 
 if __name__ == "__main__":
     import sys
