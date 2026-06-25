@@ -21,9 +21,9 @@ import os
 from dotenv import load_dotenv
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.jwt import JWTVerifier
+from mcp.server.fastmcp import Icon
 from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse
 
@@ -71,15 +71,7 @@ class IPAllowlistMiddleware(BaseHTTPMiddleware):
 
 
 ALLOWED_IPS = os.getenv("MCP_ALLOWED_IPS", "*").split(",")
-middleware = [
-    Middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["*"],
-    ),
-    Middleware(IPAllowlistMiddleware, allowed_ips=ALLOWED_IPS),
-]
+middleware = [Middleware(IPAllowlistMiddleware, allowed_ips=ALLOWED_IPS)]
 
 ####### SERVER METADATA #######
 
@@ -120,6 +112,7 @@ Datalähde: hankintailmoitukset.fi | Ylläpitäjä: Hansel Oy | Lisenssi: avoin 
 
 VERSION = "1.0.0"
 WEBSITE_URL = "https://www.hankintailmoitukset.fi"
+icon = Icon(src="https://raw.githubusercontent.com/OJHela/hilma-mcp/main/logo.png")
 
 ####### SERVER CONFIGURATION #######
 
@@ -128,6 +121,7 @@ mcp = FastMCP(
     instructions=INSTRUCTION_STRING,
     version=VERSION,
     website_url=WEBSITE_URL,
+    icons=[icon],
     auth=verifier,
 )
 
@@ -147,7 +141,7 @@ async def health_check(request: Request) -> PlainTextResponse:
 
 ####### RUNNING THE SERVER #######
 # Run with: uvicorn server:app --host 0.0.0.0 --port 8000
-app = mcp.http_app(middleware=middleware, transport="sse")
+app = mcp.http_app(middleware=middleware)
 
 if __name__ == "__main__":
     import sys
